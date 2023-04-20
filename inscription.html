@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Inscription</title>
+    <link rel="stylesheet" href="index.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="https://unpkg.com/react@17.0.2/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@firebase/app@0.6.2/firebase-app.js"></script>
+    <script src="https://unpkg.com/@firebase/auth@0.6.2/firebase-auth.js"></script>
+    <script src="https://unpkg.com/@firebase/firestore@0.6.2/firebase-firestore.js"></script>
+    <script src="https://unpkg.com/@firebase/storage@0.6.2/firebase-storage.js"></script>
+
+    <script type="module">
+      const { useState } = React;
+      const {
+        getAuth,
+        createUserWithEmailAndPassword,
+        signInWithPopup,
+        GoogleAuthProvider,
+      } = firebase.auth;
+      const { getFirestore, collection, addDoc } = firebase.firestore;
+      const { getStorage, ref, uploadBytes, getDownloadURL } = firebase.storage;
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCpsuvNM4N8BNf5CduRZayyRTjahS-Uf4A",
+        authDomain: "pet-for-life-d7c4f.firebaseapp.com",
+        projectId: "pet-for-life-d7c4f",
+        storageBucket: "pet-for-life-d7c4f.appspot.com",
+        messagingSenderId: "799976506715",
+        appId: "1:799976506715:web:fbc6d09a490233599a867e",
+        measurementId: "G-CQ04VH85S6",
+      };
+
+      firebase.initializeApp(firebaseConfig);
+
+      const auth = getAuth();
+      const provider = new GoogleAuthProvider();
+      const db = getFirestore();
+      const storage = getStorage();
+
+      function Inscription() {
+        const [formData, setFormData] = useState({
+          prénom: "",
+          nom: "",
+          animal: "",
+          freeTime: "",
+          photo: "",
+          emplacement: "",
+        });
+
+        const { prénom, nom, animal, freeTime, photo, emplacement } = formData;
+
+        const handleChange = (e) => {
+          setFormData({ ...formData, [e.target.name]: e.target.value });
+        };
+
+        const handleSubmit = async (e) => {
+          e.preventDefault();
+
+          // Enregistrer la photo de profil dans Firebase Storage
+          const photoRef = ref(storage, `users/${prénom}_${nom}`);
+          await uploadBytes(photoRef, photo);
+          const photoUrl = await getDownloadURL(photoRef);
+
+          // Enregistrer les données utilisateur dans Firestore
+          await addDoc(collection(db, "users"), {
+            prénom,
+            nom,
+            animal,
+            "temps libre": freeTime,
+            photo: photoUrl,
+            emplacement,
+          });
+
+          // Réinitialiser le formulaire
+          setFormData({
+            prénom: "",
+            nom: "",
+            animal: "",
+            freeTime: "",
+            photo: "",
+            emplacement: "",
+          });
+        };
+
+        const signInWithGoogle = () => {
+          signInWithPopup(auth, provider)
+            .then((result) => {
+              // L'utilisateur est connecté avec succès
+            })
+            .catch((erreur) => {
+              // Gestion des erreurs
+            });
+        };
+
+        return null;
+  }
+
+  export default Inscription;
+    </script>
+</body>
+</html>
